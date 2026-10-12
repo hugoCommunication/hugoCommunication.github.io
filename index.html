@@ -23,6 +23,8 @@
   --butter: #FFD666;
   --mint: #A9E5CC;
   --on-tint: #47102E;
+  --dull: #E7E2E4;
+  --dull-ink: #8E8389;
 
   --font-display: "DynaPuff", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
   --font-body: "Figtree", "Avenir Next", "Segoe UI", system-ui, sans-serif;
@@ -42,6 +44,8 @@
     --butter: #FFD666;
     --mint: #8FD9BB;
     --on-tint: #47102E;
+    --dull: #382D33;
+    --dull-ink: #9D9097;
     color-scheme: dark;
   }
 }
@@ -58,6 +62,8 @@
   --butter: #FFD666;
   --mint: #8FD9BB;
   --on-tint: #47102E;
+  --dull: #382D33;
+  --dull-ink: #9D9097;
   color-scheme: dark;
 }
 
@@ -347,14 +353,29 @@ h1:focus, h2:focus { outline: none; }
 .day-title { font-weight: 700; }
 .day-detail { font-size: 0.9rem; }
 .day--off {
-  background: transparent;
-  color: var(--ink-soft);
-  border: 2.5px dashed var(--ink-soft);
-  opacity: 0.6;
-  cursor: not-allowed;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  background: var(--dull);
+  color: var(--dull-ink);
+  border: 2px solid var(--dull-ink);
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
-.day--off .day-title { text-decoration: line-through; text-decoration-thickness: 2px; }
+.day--off .day-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.day--off .day-title { font-weight: 600; }
+.day--off .day-detail { font-size: 0.85rem; }
+.day--off .day-cloud { flex: none; font-size: 1.4rem; line-height: 1; }
+.day--off[data-bof="1"] { transform: scale(0.97) rotate(0.6deg); opacity: 0.8; }
+.day--off[data-bof="2"] { transform: scale(0.93) rotate(-1deg); opacity: 0.6; }
 .day--off.shake { animation: shake 0.4s ease; }
+.day--special.nudge { animation: nudge 0.6s ease; }
+@keyframes nudge {
+  0%, 100% { transform: rotate(-1.2deg) scale(1); }
+  40% { transform: rotate(-2.5deg) scale(1.05); }
+  70% { transform: rotate(0deg) scale(0.99); }
+}
 @keyframes shake {
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
@@ -508,7 +529,7 @@ h1:focus, h2:focus { outline: none; }
   .opt { padding: 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .screen, .day--off.shake { animation: none; }
+  .screen, .day--off.shake, .day--special.nudge { animation: none; }
   .btn, .opt, .day--special { transition: none; }
 }
 </style>
@@ -619,11 +640,11 @@ const DATE = {
       ]
     }
   ],
-  // Un seul jour peut être choisi : les autres sont là pour la forme.
+  // Un seul jour peut être choisi : les autres ne donnent pas envie, et la renvoient vers le bon.
   jours: [
-    { titre: "Mercredi 14 octobre", ok: false },
+    { titre: "Mercredi 14 octobre", ok: false, detail: "Un mercredi. Bof." },
     { titre: "Jeudi 15 octobre", ok: true, detail: "Un jour qui nous va bien", badge: "Le bon choix" },
-    { titre: "Vendredi 16 octobre", ok: false }
+    { titre: "Vendredi 16 octobre", ok: false, detail: "Fatigués de la semaine, et du monde partout." }
   ],
   heures: [
     { h: "19h30", note: "On prend notre temps" },
@@ -737,7 +758,7 @@ function initCarousel(car) {
 }
 
 /* ---------- Jours : un seul est vraiment choisissable ---------- */
-const REFUS = ["Ce soir-là n'est pas libre.", "Toujours pas libre.", "Il reste un soir, non ?"];
+const REFUS = ["Tu es sûre ? Regarde plutôt jeudi.", "Hmm. Jeudi est quand même plus joli.", "Allez. Jeudi."];
 let refus = 0;
 
 function renderJours() {
@@ -749,9 +770,9 @@ function renderJours() {
         <span class="day-title">${j.titre}</span>
         ${j.detail ? `<span class="day-detail">${j.detail}</span>` : ""}
       </button>`
-    : `<button class="day day--off" type="button" id="day-${i}" data-i="${i}" aria-disabled="true">
-        <span class="day-title">${j.titre}</span>
-        <span class="day-detail">Pas libre</span>
+    : `<button class="day day--off" type="button" id="day-${i}" data-i="${i}">
+        <span class="day-cloud" aria-hidden="true">☁︎</span>
+        <span class="day-text"><span class="day-title">${j.titre}</span><span class="day-detail">${j.detail || ""}</span></span>
       </button>`
   ).join("");
   $("#hint-jour").textContent = "";
@@ -763,6 +784,11 @@ function renderJours() {
       btn.classList.remove("shake");
       void btn.offsetWidth;
       btn.classList.add("shake");
+      btn.dataset.bof = String(Math.min(Number(btn.dataset.bof || 0) + 1, 2));
+      const top = box.querySelector(".day--special");
+      top.classList.remove("nudge");
+      void top.offsetWidth;
+      top.classList.add("nudge");
       $("#hint-jour").textContent = REFUS[Math.min(refus, REFUS.length - 1)];
       refus++;
       return;
