@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 17.5S2 12.6 2 7.2A4.2 4.2 0 0 1 10 5a4.2 4.2 0 0 1 8 2.2c0 5.4-8 10.3-8 10.3z%27 fill=%27%23DB2659%27/%3E%3C/svg%3E">
+<title>Billet pour deux</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=DynaPuff:wght@500;700&family=Figtree:wght@400;600;700&display=swap">
+<style>
+/* Layout : une seule carte façon autocollant, posée sur un fond à pois.
+   Une question par écran, et le parcours se termine sur un billet. */
+:root {
+  --bg: #FFDDE6;
+  --bg-dot: #FFC6D5;
+  --paper: #FFF8FA;
+  --ink: #47102E;
+  --ink-soft: #7A4560;
+  --line: #47102E;
+  --shadow: #47102E;
+  --accent: #DB2659;
+  --on-accent: #FFF8FA;
+  --butter: #FFD666;
+  --mint: #A9E5CC;
+  --on-tint: #47102E;
+
+  --font-display: "DynaPuff", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Figtree", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-hand: "Caveat", "Bradley Hand", "Segoe Script", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #2B0E1F;
+    --bg-dot: #3D1730;
+    --paper: #40172F;
+    --ink: #FFE6EE;
+    --ink-soft: #E3A9C0;
+    --line: #FFE6EE;
+    --shadow: #12050C;
+    --accent: #FF6B90;
+    --on-accent: #2B0E1F;
+    --butter: #FFD666;
+    --mint: #8FD9BB;
+    --on-tint: #47102E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #2B0E1F;
+  --bg-dot: #3D1730;
+  --paper: #40172F;
+  --ink: #FFE6EE;
+  --ink-soft: #E3A9C0;
+  --line: #FFE6EE;
+  --shadow: #12050C;
+  --accent: #FF6B90;
+  --on-accent: #2B0E1F;
+  --butter: #FFD666;
+  --mint: #8FD9BB;
+  --on-tint: #47102E;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--bg-dot) 2px, transparent 2.5px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+}
+img { max-width: 100%; }
+.wrap {
+  width: 100%;
+  max-width: 460px;
+  margin: auto;
+  padding-inline: 16px;
+  padding-block: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 22px 26px;
+  background: var(--paper);
+  border: 2.5px solid var(--line);
+  border-radius: 26px;
+  box-shadow: 6px 6px 0 var(--shadow);
+}
+
+/* Barre d'étapes */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.back {
+  padding: 4px 2px;
+  background: none;
+  border: 0;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.steps {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.steps li {
+  padding: 3px 10px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.steps li[data-state="done"] { background: var(--mint); color: var(--on-tint); }
+.steps li[aria-current="step"] { background: var(--accent); color: var(--on-accent); }
+
+/* Écrans */
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: arrive 0.28s ease-out;
+}
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+h1, h2, h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(2rem, 9vw, 2.7rem); }
+h2 { font-size: clamp(1.7rem, 7.5vw, 2.1rem); }
+h3 { font-size: 1.35rem; }
+h1:focus, h2:focus { outline: none; }
+.lede { margin: 0; color: var(--ink-soft); }
+
+/* Boutons */
+.btn {
+  padding: 13px 22px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2.5px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 var(--shadow);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.12s ease;
+}
+.btn--quiet { background: var(--paper); color: var(--ink); }
+.btn--small { padding: 9px 18px; font-size: 1rem; box-shadow: 3px 3px 0 var(--shadow); }
+.btn:active { box-shadow: 1px 1px 0 var(--shadow); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* Le terrain de jeu du bouton « Non » */
+.arena {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 180px;
+}
+#btn-oui {
+  transform: scale(var(--grow, 1));
+  transform-origin: top left;
+}
+#btn-non { position: relative; z-index: 1; }
+.hint {
+  margin: 0;
+  min-height: 1.5em;
+  color: var(--ink-soft);
+  font-family: var(--font-hand);
+  font-size: 1.45rem;
+  line-height: 1.1;
+}
+
+/* Restaurants */
+.restos { display: grid; gap: 18px; }
+.resto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--paper);
+  border: 2.5px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 4px 4px 0 var(--shadow);
+}
+.resto[data-picked="true"] { background: var(--butter); color: var(--on-tint); }
+.resto[data-picked="true"] .resto-detail { color: var(--on-tint); }
+.carousel { position: relative; border-bottom: 2.5px solid var(--line); }
+.track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.track::-webkit-scrollbar { display: none; }
+.track img {
+  flex: 0 0 100%;
+  display: block;
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  scroll-snap-align: start;
+  background: var(--bg-dot);
+}
+.car-btn {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-top: -19px;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2.5px solid var(--line);
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 var(--shadow);
+  cursor: pointer;
+}
+.car-btn svg { width: 18px; height: 18px; }
+.car-btn--prev { left: 10px; }
+.car-btn--next { right: 10px; }
+.car-btn:disabled { opacity: 0; pointer-events: none; }
+.dots {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+  padding: 5px 8px;
+  transform: translateX(-50%);
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+}
+.dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-soft); opacity: 0.35; }
+.dots span[data-on="true"] { background: var(--accent); opacity: 1; }
+.resto-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; }
+.resto-detail { margin: 0; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.35; }
+.resto-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+}
+.maps {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.maps svg { width: 16px; height: 16px; flex: none; }
+
+/* Choix génériques */
+.opts { display: grid; gap: 12px; }
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 16px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2.5px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 3px 3px 0 var(--shadow);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+.opt:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--shadow); }
+.opt[aria-pressed="true"] { background: var(--butter); color: var(--on-tint); }
+.opt-detail { color: var(--ink-soft); font-size: 0.92rem; line-height: 1.3; }
+.opt[aria-pressed="true"] .opt-detail { color: var(--on-tint); }
+.opt-time {
+  flex: none;
+  min-width: 4.2ch;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Jours */
+.days { display: grid; gap: 14px; }
+.day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 16px;
+  font: inherit;
+  text-align: left;
+  border-radius: 18px;
+}
+.day-title { font-weight: 700; }
+.day-detail { font-size: 0.9rem; }
+.day--off {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 2.5px dashed var(--ink-soft);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.day--off .day-title { text-decoration: line-through; text-decoration-thickness: 2px; }
+.day--off.shake { animation: shake 0.4s ease; }
+@keyframes shake {
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.day--special {
+  gap: 4px;
+  margin-block: 6px;
+  padding: 26px 20px 22px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 3px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 6px 6px 0 var(--shadow);
+  transform: rotate(-1.2deg);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.day--special:hover { transform: rotate(-1.2deg) translate(-2px, -2px); box-shadow: 8px 8px 0 var(--shadow); }
+.day--special .day-title, .day--special .day-detail { padding-right: 18%; }
+.day--special .day-title { font-family: var(--font-display); font-size: clamp(1.6rem, 7.5vw, 2rem); line-height: 1.05; }
+.day--special .day-detail { font-family: var(--font-hand); font-size: 1.5rem; line-height: 1.1; }
+.day--special[aria-pressed="true"] { outline: 4px solid var(--butter); outline-offset: 4px; }
+.day-badge {
+  position: absolute;
+  top: -14px;
+  right: 16px;
+  padding: 3px 12px;
+  background: var(--butter);
+  color: var(--on-tint);
+  border: 2.5px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(3deg);
+}
+.day-hearts {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.day-hearts i {
+  position: absolute;
+  bottom: 12px;
+  color: var(--butter);
+  font-style: normal;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+.day-hearts i:nth-child(1) { right: 6%; bottom: 50%; }
+.day-hearts i:nth-child(2) { right: 15%; bottom: 14%; font-size: 0.8rem; }
+.day-hearts i:nth-child(3) { right: 4%; bottom: 12%; font-size: 1.4rem; }
+.day-hearts i:nth-child(4) { right: 16%; bottom: 62%; font-size: 0.75rem; }
+.day-hearts i:nth-child(5) { right: 9%; bottom: 78%; font-size: 0.9rem; }
+@media (prefers-reduced-motion: no-preference) {
+  .day-hearts i { animation: rise 3.2s ease-in-out infinite; }
+  .day-hearts i:nth-child(2) { animation-delay: -0.6s; }
+  .day-hearts i:nth-child(3) { animation-delay: -1.3s; }
+  .day-hearts i:nth-child(4) { animation-delay: -2s; }
+  .day-hearts i:nth-child(5) { animation-delay: -2.6s; }
+}
+@keyframes rise {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.9; }
+  50% { transform: translateY(-10px) scale(1.15); opacity: 0.5; }
+}
+
+/* Billet */
+.ticket {
+  background: var(--butter);
+  color: var(--on-tint);
+  border: 2.5px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 4px 4px 0 var(--shadow);
+  transform: rotate(-1.2deg);
+}
+.ticket-main { display: flex; flex-direction: column; gap: 12px; padding: 18px 18px 16px; }
+.ticket-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.ticket-place {
+  font-family: var(--font-display);
+  font-size: clamp(1.45rem, 6.5vw, 1.8rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.ticket dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; }
+.ticket dt {
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.ticket dd { margin: 0; font-weight: 700; }
+.ticket-stub {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 14px;
+  border-top: 2.5px dashed var(--on-tint);
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+.barcode {
+  flex: none;
+  width: 64px;
+  height: 34px;
+  background: repeating-linear-gradient(90deg,
+    var(--on-tint) 0 2px, transparent 2px 5px,
+    var(--on-tint) 5px 9px, transparent 9px 11px,
+    var(--on-tint) 11px 12px, transparent 12px 16px);
+}
+.signature {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  transform: rotate(-2deg);
+  align-self: flex-end;
+}
+.end-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (max-width: 380px) {
+  .card { padding: 20px 16px 22px; }
+  .opt { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen, .day--off.shake { animation: none; }
+  .btn, .opt, .day--special { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <div class="card">
+    <div class="nav" id="nav" hidden>
+      <button class="back" id="btn-back" type="button">Retour</button>
+      <ol class="steps" aria-label="Étapes">
+        <li>Resto</li>
+        <li>Soir</li>
+        <li>Heure</li>
+      </ol>
+    </div>
+
+    <section class="screen" data-screen="ask">
+      <p class="eyebrow">Pour toi</p>
+      <h1 tabindex="-1">On se fait un date, toi et moi ?</h1>
+      <p class="lede">J'ai tout préparé. Tu n'as plus qu'à choisir.</p>
+      <div class="arena" id="arena">
+        <button class="btn" id="btn-oui" type="button">Oui, évidemment</button>
+        <button class="btn btn--quiet" id="btn-non" type="button">Non</button>
+      </div>
+      <p class="hint" id="hint" aria-live="polite"></p>
+    </section>
+
+    <section class="screen" data-screen="lieu" hidden>
+      <h2 tabindex="-1">On va où ?</h2>
+      <p class="lede">Trois restos. Fais défiler les photos, puis choisis.</p>
+      <div class="restos" id="restos"></div>
+    </section>
+
+    <section class="screen" data-screen="jour" hidden>
+      <h2 tabindex="-1">Quel soir ?</h2>
+      <div class="days" id="days"></div>
+      <p class="hint" id="hint-jour" aria-live="polite"></p>
+    </section>
+
+    <section class="screen" data-screen="heure" hidden>
+      <h2 tabindex="-1">À quelle heure ?</h2>
+      <div class="opts" id="opts-heure"></div>
+    </section>
+
+    <section class="screen" data-screen="billet" hidden>
+      <p class="eyebrow">C'est noté</p>
+      <h2 tabindex="-1">Voilà ton billet.</h2>
+      <div class="ticket">
+        <div class="ticket-main">
+          <div class="ticket-top"><span>Billet pour deux</span><span>N° 0001</span></div>
+          <div class="ticket-place" id="t-lieu"></div>
+          <dl>
+            <dt>Quand</dt><dd id="t-jour"></dd>
+            <dt>Heure</dt><dd id="t-heure"></dd>
+            <dt>Avec</dt><dd>Hugo</dd>
+          </dl>
+        </div>
+        <div class="ticket-stub">
+          <div class="barcode" aria-hidden="true"></div>
+          <span>Non remboursable. Bisou obligatoire à l'arrivée.</span>
+        </div>
+      </div>
+      <p class="signature">J'ai hâte. Hugo</p>
+      <div class="end-actions">
+        <button class="btn btn--quiet" id="btn-restart" type="button">Changer d'avis</button>
+        <a class="maps" id="t-maps" href="#" target="_blank" rel="noopener">Voir l'itinéraire</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+/* ------------------------------------------------------------------
+   Tout le contenu du date est ici. Pour un nouveau date, on ne change
+   que ce bloc (et les photos du dossier images/).
+------------------------------------------------------------------- */
+const DATE = {
+  lieux: [
+    {
+      nom: "Kuma-ï Sushi",
+      detail: "Japonais à volonté, sous les lanternes, sur des coussins tout doux.",
+      maps: "https://maps.app.goo.gl/AMbDCLfBNVDAzeuj7",
+      photos: [
+        { src: "images/kuma-1.jpg", alt: "Devanture de Kuma-ï Sushi avec son enseigne néon", pos: "center 18%" },
+        { src: "images/kuma-2.jpg", alt: "Salle de Kuma-ï Sushi avec lanternes et coussins colorés" }
+      ]
+    },
+    {
+      nom: "L'Amuse Bouches",
+      detail: "Des tapas et une étagère pleine de jeux de société. Je vais te battre.",
+      maps: "https://maps.app.goo.gl/fT29XScpuko2siBy9",
+      photos: [
+        { src: "images/amuse-1.jpg", alt: "Étagères remplies de jeux de société à L'Amuse Bouches" },
+        { src: "images/amuse-2.jpg", alt: "Façade de L'Amuse Bouches, rue de la Fontaine" }
+      ]
+    },
+    {
+      nom: "Yukimi",
+      detail: "Un Totoro géant, et un robot chat qui apporte les plats à table.",
+      maps: "https://maps.app.goo.gl/kck8svN94yhMy55a6",
+      photos: [
+        { src: "images/yukimi-1.jpg", alt: "Comptoir de Yukimi avec ses lanternes" },
+        { src: "images/yukimi-2.jpg", alt: "Totoro géant entouré de peluches chez Yukimi" },
+        { src: "images/yukimi-3.jpg", alt: "Robot serveur à tête de chat chez Yukimi", pos: "center 25%" }
+      ]
+    }
+  ],
+  // Un seul jour peut être choisi : les autres sont là pour la forme.
+  jours: [
+    { titre: "Mercredi 14 octobre", ok: false },
+    { titre: "Jeudi 15 octobre", ok: true, detail: "Un jour qui nous va bien", badge: "Le bon choix" },
+    { titre: "Vendredi 16 octobre", ok: false }
+  ],
+  heures: [
+    { h: "19h30", note: "On prend notre temps" },
+    { h: "20h00", note: "Le grand classique" },
+    { h: "20h30", note: "Après une petite balade" },
+    { h: "21h00", note: "Dîner un peu tard" },
+    { h: "21h30", note: "Version oiseaux de nuit" }
+  ]
+};
+
+const ORDRE = ["ask", "lieu", "jour", "heure", "billet"];
+const state = { step: "ask", lieu: null, jour: null, heure: null };
+const calme = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const $ = (sel) => document.querySelector(sel);
+const nav = $("#nav");
+const stepEls = [...document.querySelectorAll(".steps li")];
+
+const FLECHE = (d) => `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${d === "g" ? "M12.5 4 6.5 10l6 6" : "M7.5 4l6 6-6 6"}" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const PIN = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 18s6-5.6 6-10a6 6 0 0 0-12 0c0 4.4 6 10 6 10z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="10" cy="8" r="2.2" fill="currentColor"/></svg>`;
+
+/* ---------- Navigation entre les écrans ---------- */
+function show(step, focus = true) {
+  state.step = step;
+  const i = ORDRE.indexOf(step);
+  document.querySelectorAll("[data-screen]").forEach((s) => {
+    s.hidden = s.dataset.screen !== step;
+  });
+  nav.hidden = i < 1 || i > 3;
+  stepEls.forEach((li, k) => {
+    li.dataset.state = k + 1 < i ? "done" : "todo";
+    if (k + 1 === i) li.setAttribute("aria-current", "step");
+    else li.removeAttribute("aria-current");
+  });
+
+  if (step === "lieu") renderRestos();
+  if (step === "jour") renderJours();
+  if (step === "heure") renderHeures();
+  if (step === "billet") fillTicket();
+
+  if (focus) {
+    const titre = document.querySelector(`[data-screen="${step}"] h1, [data-screen="${step}"] h2`);
+    if (titre) titre.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: calme ? "auto" : "smooth" });
+  }
+}
+
+function suivant(kind) {
+  setTimeout(() => show(ORDRE[ORDRE.indexOf(kind) + 1]), calme ? 0 : 240);
+}
+
+/* ---------- Restos avec carrousel ---------- */
+function renderRestos() {
+  const box = $("#restos");
+  box.innerHTML = DATE.lieux.map((l, i) => {
+    const multi = l.photos.length > 1;
+    return `<article class="resto" data-picked="${state.lieu === i}">
+      <div class="carousel">
+        <div class="track" tabindex="0" role="group" aria-label="Photos de ${l.nom}">
+          ${l.photos.map((p, k) => `<img src="${p.src}" alt="${p.alt}" style="object-position:${p.pos || "center"}" loading="${k === 0 ? "eager" : "lazy"}" draggable="false">`).join("")}
+        </div>
+        ${multi ? `
+          <button class="car-btn car-btn--prev" type="button" aria-label="Photo précédente" disabled>${FLECHE("g")}</button>
+          <button class="car-btn car-btn--next" type="button" aria-label="Photo suivante">${FLECHE("d")}</button>
+          <div class="dots" aria-hidden="true">${l.photos.map((_, k) => `<span data-on="${k === 0}"></span>`).join("")}</div>` : ""}
+      </div>
+      <div class="resto-body">
+        <h3>${l.nom}</h3>
+        <p class="resto-detail">${l.detail}</p>
+        <div class="resto-actions">
+          <a class="maps" href="${l.maps}" target="_blank" rel="noopener">${PIN}Voir sur Google Maps</a>
+          <button class="btn btn--small" type="button" id="pick-lieu-${i}" data-pick="${i}">On va là</button>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+
+  box.querySelectorAll(".carousel").forEach(initCarousel);
+  box.onclick = (e) => {
+    const btn = e.target.closest("[data-pick]");
+    if (!btn) return;
+    state.lieu = Number(btn.dataset.pick);
+    box.querySelectorAll(".resto").forEach((r, k) => (r.dataset.picked = String(k === state.lieu)));
+    suivant("lieu");
+  };
+}
+
+function initCarousel(car) {
+  const track = car.querySelector(".track");
+  const prev = car.querySelector(".car-btn--prev");
+  const next = car.querySelector(".car-btn--next");
+  const dots = [...car.querySelectorAll(".dots span")];
+  const n = track.children.length;
+  if (n < 2) return;
+  const index = () => Math.round(track.scrollLeft / track.clientWidth);
+  const update = () => {
+    const i = index();
+    dots.forEach((d, k) => (d.dataset.on = String(k === i)));
+    prev.disabled = i <= 0;
+    next.disabled = i >= n - 1;
+  };
+  const go = (dir) => track.scrollTo({ left: (index() + dir) * track.clientWidth, behavior: calme ? "auto" : "smooth" });
+  prev.addEventListener("click", () => go(-1));
+  next.addEventListener("click", () => go(1));
+  track.addEventListener("scroll", update, { passive: true });
+  track.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); go(1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
+  });
+}
+
+/* ---------- Jours : un seul est vraiment choisissable ---------- */
+const REFUS = ["Ce soir-là n'est pas libre.", "Toujours pas libre.", "Il reste un soir, non ?"];
+let refus = 0;
+
+function renderJours() {
+  const box = $("#days");
+  box.innerHTML = DATE.jours.map((j, i) => j.ok
+    ? `<button class="day day--special" type="button" id="day-${i}" data-i="${i}" aria-pressed="${state.jour === i}">
+        <span class="day-hearts" aria-hidden="true"><i>♥</i><i>✦</i><i>♥</i><i>✦</i><i>♥</i></span>
+        ${j.badge ? `<span class="day-badge">${j.badge}</span>` : ""}
+        <span class="day-title">${j.titre}</span>
+        ${j.detail ? `<span class="day-detail">${j.detail}</span>` : ""}
+      </button>`
+    : `<button class="day day--off" type="button" id="day-${i}" data-i="${i}" aria-disabled="true">
+        <span class="day-title">${j.titre}</span>
+        <span class="day-detail">Pas libre</span>
+      </button>`
+  ).join("");
+  $("#hint-jour").textContent = "";
+
+  box.onclick = (e) => {
+    const btn = e.target.closest(".day");
+    if (!btn) return;
+    if (btn.classList.contains("day--off")) {
+      btn.classList.remove("shake");
+      void btn.offsetWidth;
+      btn.classList.add("shake");
+      $("#hint-jour").textContent = REFUS[Math.min(refus, REFUS.length - 1)];
+      refus++;
+      return;
+    }
+    state.jour = Number(btn.dataset.i);
+    btn.setAttribute("aria-pressed", "true");
+    suivant("jour");
+  };
+}
+
+/* ---------- Heures ---------- */
+function renderHeures() {
+  const box = $("#opts-heure");
+  box.innerHTML = DATE.heures.map((h, i) =>
+    `<button class="opt" type="button" id="opt-heure-${i}" data-i="${i}" aria-pressed="${state.heure === i}">
+      <span class="opt-time">${h.h}</span><span class="opt-detail">${h.note}</span>
+    </button>`
+  ).join("");
+  box.onclick = (e) => {
+    const btn = e.target.closest(".opt");
+    if (!btn) return;
+    state.heure = Number(btn.dataset.i);
+    box.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    suivant("heure");
+  };
+}
+
+/* ---------- Billet ---------- */
+function fillTicket() {
+  const lieu = DATE.lieux[state.lieu];
+  $("#t-lieu").textContent = lieu.nom;
+  $("#t-jour").textContent = DATE.jours[state.jour].titre;
+  $("#t-heure").textContent = DATE.heures[state.heure].h;
+  $("#t-maps").href = lieu.maps;
+  $("#t-maps").innerHTML = `${PIN}Voir l'itinéraire`;
+  if (!calme) confetti();
+}
+
+$("#btn-back").addEventListener("click", () => show(ORDRE[ORDRE.indexOf(state.step) - 1]));
+$("#btn-oui").addEventListener("click", () => show("lieu"));
+$("#btn-restart").addEventListener("click", () => {
+  state.lieu = state.jour = state.heure = null;
+  refus = 0;
+  resetNon();
+  show("ask");
+});
+
+/* ---------- Le bouton « Non » qui s'enfuit ---------- */
+const arena = $("#arena");
+const oui = $("#btn-oui");
+const non = $("#btn-non");
+const hint = $("#hint");
+const REPLIQUES = ["Raté.", "Il est rapide, ce bouton.", "Toujours pas.", "Bon. Il reste l'autre bouton."];
+let esquives = 0;
+let derniere = 0;
+
+function esquive() {
+  const now = performance.now();
+  if (now - derniere < 250) return;
+  derniere = now;
+
+  const A = arena.getBoundingClientRect();
+  const O = oui.getBoundingClientRect();
+  const w = non.offsetWidth;
+  const h = non.offsetHeight;
+  const zone = { x: O.left - A.left - 10, y: O.top - A.top - 10, w: O.width + 20, h: O.height + 20 };
+  let x = 0, y = 0, essais = 0;
+  do {
+    x = Math.random() * Math.max(0, A.width - w);
+    y = Math.random() * Math.max(0, A.height - h);
+    essais++;
+  } while (essais < 25 && x < zone.x + zone.w && x + w > zone.x && y < zone.y + zone.h && y + h > zone.y);
+
+  non.style.transform = `translate(${x - non.offsetLeft}px, ${y - non.offsetTop}px)`;
+  esquives++;
+  oui.style.setProperty("--grow", String(1 + Math.min(esquives, 5) * 0.05));
+  hint.textContent = REPLIQUES[Math.min(esquives - 1, REPLIQUES.length - 1)];
+}
+function resetNon() {
+  esquives = 0;
+  non.style.transform = "";
+  oui.style.removeProperty("--grow");
+  hint.textContent = "";
+}
+non.addEventListener("pointerenter", esquive);
+non.addEventListener("pointerdown", (e) => { e.preventDefault(); esquive(); });
+non.addEventListener("focus", esquive);
+non.addEventListener("click", (e) => { e.preventDefault(); esquive(); });
+
+/* ---------- Pluie de cœurs à la fin ---------- */
+function confetti() {
+  const canvas = $("#confetti");
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const css = getComputedStyle(document.documentElement);
+  const couleurs = ["--accent", "--butter", "--mint", "--ink"].map((t) => css.getPropertyValue(t).trim());
+  const coeurs = Array.from({ length: 46 }, () => ({
+    x: Math.random() * W,
+    y: -20 - Math.random() * H * 0.6,
+    s: 6 + Math.random() * 9,
+    vy: 2 + Math.random() * 3,
+    vx: -0.8 + Math.random() * 1.6,
+    r: Math.random() * Math.PI,
+    vr: -0.04 + Math.random() * 0.08,
+    c: couleurs[Math.floor(Math.random() * couleurs.length)]
+  }));
+
+  const debut = performance.now();
+  const DUREE = 3600;
+  (function frame(t) {
+    const age = t - debut;
+    ctx.clearRect(0, 0, W, H);
+    if (age > DUREE) return;
+    ctx.globalAlpha = Math.min(1, (DUREE - age) / 600);
+    for (const c of coeurs) {
+      c.x += c.vx; c.y += c.vy; c.r += c.vr;
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.r);
+      ctx.fillStyle = c.c;
+      ctx.beginPath();
+      ctx.moveTo(0, c.s * 0.9);
+      ctx.bezierCurveTo(-c.s * 1.2, 0, -c.s * 0.6, -c.s * 0.9, 0, -c.s * 0.25);
+      ctx.bezierCurveTo(c.s * 0.6, -c.s * 0.9, c.s * 1.2, 0, 0, c.s * 0.9);
+      ctx.fill();
+      ctx.restore();
+    }
+    requestAnimationFrame(frame);
+  })(debut);
+}
+
+/* ---------- Démarrage ---------- */
+function start(data) {
+  if (data && ORDRE.includes(data.step)) {
+    state.lieu = Number.isInteger(data.lieu) ? data.lieu : null;
+    state.jour = Number.isInteger(data.jour) ? data.jour : null;
+    state.heure = Number.isInteger(data.heure) ? data.heure : null;
+    const i = ORDRE.indexOf(data.step);
+    const ok = (i < 2 || state.lieu !== null) && (i < 3 || state.jour !== null) && (i < 4 || state.heure !== null);
+    show(ok ? data.step : "ask", false);
+  } else {
+    show("ask", false);
+  }
+}
+window.claude?.hot?.snapshot?.(() => ({ ...state }));
+if (window.claude?.hot?.ready) window.claude.hot.ready(start);
+else start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
