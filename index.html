@@ -276,7 +276,7 @@ h1:focus, h2:focus { outline: none; }
 }
 .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-soft); opacity: 0.35; }
 .dots span[data-on="true"] { background: var(--accent); opacity: 1; }
-.resto-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; }
+.resto-body { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 14px 16px 16px; }
 .resto-detail { margin: 0; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.35; }
 .resto-actions {
   display: flex;
@@ -284,7 +284,8 @@ h1:focus, h2:focus { outline: none; }
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: auto;
+  padding-top: 6px;
 }
 .maps {
   display: inline-flex;
@@ -487,6 +488,13 @@ h1:focus, h2:focus { outline: none; }
 }
 .end-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
 
+/* Sur ordinateur : les trois restos côte à côte */
+@media (min-width: 900px) {
+  .wrap--wide { max-width: 1120px; }
+  .wrap--wide .restos { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+  .wrap--wide .card { padding: 28px 30px 32px; }
+}
+
 #confetti {
   position: fixed;
   inset: 0;
@@ -645,6 +653,7 @@ function show(step, focus = true) {
     s.hidden = s.dataset.screen !== step;
   });
   nav.hidden = i < 1 || i > 3;
+  document.querySelector(".wrap").classList.toggle("wrap--wide", step === "lieu");
   stepEls.forEach((li, k) => {
     li.dataset.state = k + 1 < i ? "done" : "todo";
     if (k + 1 === i) li.setAttribute("aria-current", "step");
