@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Placard à portions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Mise en page : un rayon d'étiquettes de gondole. Chaque produit est une étiquette,
+   les kcal de la portion tiennent la place du prix, le code-barres est à droite. */
+:root{
+  --fond:#E6EBE8; --etiquette:#FFFFFF; --encre:#13201A; --sourdine:#56655E; --filet:#C5CFCA;
+  --jaune:#F5C400; --sur-jaune:#13201A;
+  --prot:#17805E; --gluc:#2F66C4; --lip:#C8601A;
+  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(19,32,26,.74);
+  --titre:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --texte:"Barlow","Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fond:#0F1613; --etiquette:#1A2420; --encre:#E9F0EC; --sourdine:#95A69D; --filet:#2D3B35;
+    --jaune:#F5C400; --sur-jaune:#13201A;
+    --prot:#45C79B; --gluc:#7FA6F5; --lip:#F29B58;
+    --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --fond:#0F1613; --etiquette:#1A2420; --encre:#E9F0EC; --sourdine:#95A69D; --filet:#2D3B35;
+  --jaune:#F5C400; --sur-jaune:#13201A;
+  --prot:#45C79B; --gluc:#7FA6F5; --lip:#F29B58;
+  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--fond);color:var(--encre);font-family:var(--texte);font-size:15px;line-height:1.45}
+h1,h2,p,dl,dd{margin:0}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--encre);outline-offset:2px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.page{max-width:1500px;margin-inline:auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 56px;display:flex;flex-direction:column;gap:18px}
+
+/* En-tête */
+.tete{display:flex;flex-direction:column;gap:6px}
+.accueil{align-self:flex-start;font-size:14px;font-weight:500;color:var(--sourdine);text-decoration:none;margin-bottom:6px}
+.accueil:hover{color:var(--encre);text-decoration:underline;text-underline-offset:2px}
+.surtitre{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--sourdine)}
+h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-height:.95;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.chapo{max-width:62ch;color:var(--sourdine);font-size:16px}
+
+/* Recherche et filtres */
+.outils{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--fond);padding-block:10px;border-bottom:1px solid var(--filet);display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.recherche{flex:1 1 280px;min-width:0;max-width:460px}
+.recherche input{width:100%;height:44px;padding:0 14px;border:1.5px solid var(--encre);border-radius:4px;background:var(--etiquette);font-size:16px}
+.recherche input::placeholder{color:var(--sourdine)}
+.filtres{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.filtre{height:36px;padding:0 12px;border:1px solid var(--filet);border-radius:4px;background:transparent;font-weight:500;cursor:pointer}
+.filtre:hover{border-color:var(--encre)}
+.filtre[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:var(--fond)}
+.compte{font-size:13px;color:var(--sourdine)}
+
+/* Rayon */
+.rayon{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,440px),1fr));gap:16px}
+.etiquette{container-type:inline-size;background:var(--etiquette);border:1px solid var(--filet);border-radius:4px;display:flex}
+.corps{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;padding:16px}
+@container (min-width:470px){
+  .corps{grid-template-columns:minmax(0,1fr) 196px;gap:20px}
+}
+.infos{min-width:0;display:flex;flex-direction:column;gap:12px}
+.entete{display:flex;flex-direction:column;gap:2px}
+.rayon-nom{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sourdine)}
+.etiquette h2,.scan-fiche h2{font-family:var(--titre);font-weight:700;font-size:28px;line-height:1.02;letter-spacing:.005em;text-wrap:balance}
+.marque{font-size:14px;color:var(--sourdine)}
+
+/* Le « prix » : les kcal de la portion */
+.ligne-prix{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:stretch}
+.prix{background:var(--jaune);color:var(--sur-jaune);min-width:128px;padding:8px 12px 6px;display:flex;align-items:baseline;gap:6px;border-radius:2px}
+.kcal{font-family:var(--titre);font-weight:700;font-size:56px;line-height:.9;font-variant-numeric:tabular-nums}
+.unite{font-family:var(--titre);font-weight:600;font-size:20px}
+.portion{display:flex;flex-direction:column;gap:4px;justify-content:center;min-width:0}
+.portion-titre{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sourdine)}
+.pas{display:flex;align-items:center;gap:6px}
+.pas button{width:36px;height:36px;border:1.5px solid var(--encre);border-radius:4px;background:transparent;font-size:20px;line-height:1;cursor:pointer}
+.pas button:hover{background:var(--encre);color:var(--etiquette)}
+.quantite{min-width:78px;text-align:center;font-family:var(--titre);font-weight:700;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.pesee{font-size:13px;color:var(--sourdine)}
+.retour{border:0;background:none;padding:0;font-size:13px;text-decoration:underline;text-underline-offset:2px;cursor:pointer;color:var(--encre)}
+
+/* Macros */
+.macros{display:flex;flex-direction:column;gap:8px}
+.barre{display:flex;gap:2px;height:8px}
+.barre i{display:block;min-width:2px;border-radius:1px}
+.barre .p,.puce.p{background:var(--prot)}
+.barre .g,.puce.g{background:var(--gluc)}
+.barre .l,.puce.l{background:var(--lip)}
+.macros dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.macros dt{font-size:12px;color:var(--sourdine);display:flex;align-items:center;gap:5px}
+.puce{width:8px;height:8px;border-radius:1px;flex:none}
+.macros dd{font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+
+/* Cuisson */
+.cuit{font-size:14px}
+.cuit strong{font-weight:600}
+.cuit span{color:var(--sourdine)}
+.casserole{border-top:1px solid var(--filet);padding-top:10px}
+.casserole summary{cursor:pointer;font-weight:600;font-size:14px}
+.cass-corps{display:flex;flex-direction:column;gap:8px;padding-top:10px}
+.cass-corps label{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 12px;font-size:14px}
+.champ{display:inline-flex;align-items:center;gap:6px;color:var(--sourdine)}
+.champ input{width:92px;height:36px;padding:0 8px;border:1px solid var(--filet);border-radius:4px;background:var(--fond);color:var(--encre);text-align:right;font-variant-numeric:tabular-nums}
+.cass-res{font-size:14px;padding:8px 10px;border:1px dashed var(--filet);border-radius:4px}
+.cass-res strong{font-weight:600}
+.cent{margin-top:auto;padding-top:10px;border-top:1px solid var(--filet);font-size:12.5px;color:var(--sourdine);font-variant-numeric:tabular-nums}
+
+/* Code-barres */
+.code{display:flex;flex-direction:column;gap:6px;min-width:0;align-self:start;width:100%;max-width:300px}
+.plaque{display:block;width:100%;padding:10px 6px 6px;border:1px solid var(--filet);border-radius:2px;background:var(--plaque);cursor:zoom-in}
+.plaque:hover{border-color:var(--encre)}
+.plaque svg,.scan-plaque svg{display:block;width:100%;height:auto}
+.code-note{font-size:12.5px;color:var(--sourdine)}
+.code-note b{font-weight:600;color:var(--encre)}
+
+.vide{padding:32px 0;color:var(--sourdine);font-size:16px}
+.note{border-top:1px solid var(--filet);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--sourdine);max-width:75ch}
+
+/* Mode scan */
+.scan{position:fixed;inset:0;z-index:20;background:var(--voile);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.scan-fiche{width:100%;max-width:560px;background:var(--etiquette);border-radius:4px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.scan-plaque{background:var(--plaque);padding:22px 14px 12px;border-radius:2px;border:1px solid var(--filet)}
+.scan-saisie{font-size:17px}
+.scan-saisie strong{font-family:var(--titre);font-weight:700;font-size:24px;background:var(--jaune);color:var(--sur-jaune);padding:1px 8px;border-radius:2px;white-space:nowrap}
+.scan-kcal{font-size:14px;color:var(--sourdine);font-variant-numeric:tabular-nums}
+.fermer{align-self:flex-end;height:42px;padding:0 20px;border:1.5px solid var(--encre);border-radius:4px;background:var(--encre);color:var(--etiquette);font-weight:600;cursor:pointer}
+
+@media (prefers-reduced-motion:no-preference){
+  .filtre,.pas button,.plaque{transition:background-color .12s,border-color .12s,color .12s}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="tete">
+    <a class="accueil" href="../">← Accueil</a>
+    <p class="surtitre">FatLoss · maquette</p>
+    <h1>Placard à portions</h1>
+    <p class="chapo">Tes produits de base, la portion que tu te sers, ce qu'elle pèse une fois cuite, et le code-barres à scanner dans Yazio sans ressortir l'emballage.</p>
+  </header>
+
+  <div class="outils">
+    <label class="recherche" for="recherche">
+      <span class="vh">Rechercher un produit</span>
+      <input id="recherche" type="search" placeholder="Rechercher : riz, poulet, lentilles…" autocomplete="off">
+    </label>
+    <div class="filtres" id="filtres" role="group" aria-label="Rayons"></div>
+  </div>
+
+  <p class="compte" id="compte" aria-live="polite"></p>
+  <main class="rayon" id="rayon"></main>
+  <p class="vide" id="vide" hidden></p>
+
+  <footer class="note">
+    <p>Maquette : les produits, les portions et les valeurs nutritionnelles sont des exemples (moyennes pour 100 g). Sur le vrai site, tu y mets les chiffres de tes emballages.</p>
+    <p>Seul le code des penne Barilla est un vrai code produit, pour tester le scan sur écran avec Yazio. Les autres commencent par 2, un préfixe réservé à l'usage interne des magasins : ils ne correspondent à aucun produit.</p>
+    <p>Les coefficients de cuisson sont des moyennes. Si tu pèses la casserole cuite, le calcul « Je cuisine pour deux » n'en a plus besoin.</p>
+  </footer>
+</div>
+
+<div class="scan" id="scan" role="dialog" aria-modal="true" aria-labelledby="scan-nom" hidden>
+  <div class="scan-fiche">
+    <p class="rayon-nom" id="scan-cat"></p>
+    <h2 id="scan-nom"></h2>
+    <div class="scan-plaque" id="scan-code"></div>
+    <p class="scan-saisie">Quantité à saisir dans Yazio : <strong id="scan-qte"></strong></p>
+    <p class="scan-kcal" id="scan-kcal"></p>
+    <button type="button" class="fermer" id="scan-fermer">Fermer</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Données : c'est la seule partie à modifier pour ajouter un produit ---------- */
+/* ean : 13 chiffres (vrai code) ou 12 chiffres (la clé de contrôle est calculée).
+   portion : en grammes, ou en unités si "unite" est renseigné.
+   cuisson : poids cuit = poids cru × coefficient. */
+const PRODUITS = [
+  {id:"penne", nom:"Penne rigate", marque:"Barilla · paquet 500 g", rayon:"Féculents", ean:"8076802085738", reel:true,
+   portion:100, pas:10, pesee:"poids cru", cuisson:2.2, pour100:{kcal:359,p:12.5,g:71.2,l:2}, mots:"pates pâtes"},
+  {id:"riz", nom:"Riz basmati", marque:"Sachet 1 kg", rayon:"Féculents", ean:"200417300021",
+   portion:100, pas:10, pesee:"poids cru", cuisson:2.8, pour100:{kcal:351,p:8.2,g:77,l:0.9}},
+  {id:"pdt", nom:"Pommes de terre", marque:"Filet 2,5 kg · à l'eau", rayon:"Féculents", ean:"200893100054",
+   portion:250, pas:25, pesee:"poids cru, épluchées", cuisson:1, pour100:{kcal:80,p:2,g:16.7,l:0.1}, mots:"patates"},
+  {id:"semoule", nom:"Semoule de blé", marque:"Moyenne · boîte 500 g", rayon:"Féculents", ean:"201530900012",
+   portion:80, pas:10, pesee:"poids sec", cuisson:2.4, pour100:{kcal:357,p:12.5,g:72,l:1.5}, mots:"couscous"},
+  {id:"quinoa", nom:"Quinoa", marque:"Sachet 400 g", rayon:"Féculents", ean:"202118400067",
+   portion:70, pas:10, pesee:"poids sec", cuisson:2.8, pour100:{kcal:368,p:14,g:64,l:6}},
+  {id:"patate-douce", nom:"Patate douce", marque:"Vrac · au four", rayon:"Féculents", ean:"202476500093",
+   portion:250, pas:25, pesee:"poids cru, épluchée", cuisson:0.9, pour100:{kcal:86,p:1.6,g:20,l:0.1}},
+  {id:"avoine", nom:"Flocons d'avoine", marque:"Sachet 500 g", rayon:"Féculents", ean:"208296400018",
+   portion:50, pas:5, pesee:"poids sec", pour100:{kcal:372,p:13.5,g:58.7,l:7}, mots:"porridge petit dejeuner"},
+  {id:"lentilles", nom:"Lentilles vertes", marque:"Sachet 500 g", rayon:"Légumineuses", ean:"201264700038",
+   portion:80, pas:10, pesee:"poids sec", cuisson:2.5, pour100:{kcal:332,p:25,g:48,l:1.5}},
+  {id:"pois-chiches", nom:"Pois chiches", marque:"Bocal 400 g · déjà cuits", rayon:"Légumineuses", ean:"203051200041",
+   portion:130, pas:10, pesee:"poids égoutté", pour100:{kcal:139,p:7.5,g:17,l:3}},
+  {id:"poulet", nom:"Blanc de poulet", marque:"Barquette de 4 filets", rayon:"Viandes et poissons", ean:"203389600075",
+   portion:150, pas:10, pesee:"poids cru", cuisson:0.75, pour100:{kcal:110,p:23.5,g:0,l:1.5}, mots:"viande volaille"},
+  {id:"steak", nom:"Steak haché 5 %", marque:"Barquette de 2 × 125 g", rayon:"Viandes et poissons", ean:"204127800016",
+   portion:125, pas:25, pesee:"poids cru", cuisson:0.8, pour100:{kcal:125,p:21,g:0,l:5}, mots:"viande boeuf bœuf"},
+  {id:"saumon", nom:"Pavé de saumon", marque:"Barquette de 2 pavés", rayon:"Viandes et poissons", ean:"204660300082",
+   portion:130, pas:10, pesee:"poids cru", cuisson:0.85, pour100:{kcal:200,p:20,g:0,l:13}, mots:"poisson"},
+  {id:"thon", nom:"Thon au naturel", marque:"Boîte 140 g", rayon:"Viandes et poissons", ean:"205214900034",
+   portion:100, pas:10, pesee:"poids égoutté", pour100:{kcal:109,p:25,g:0,l:1}, mots:"poisson conserve"},
+  {id:"oeufs", nom:"Œufs", marque:"Boîte de 6 · calibre moyen", rayon:"Laitages et œufs", ean:"205873100069",
+   portion:2, pas:1, unite:"œuf", gParUnite:55, pesee:"sans la coquille", pour100:{kcal:140,p:12.5,g:0.7,l:9.8}},
+  {id:"skyr", nom:"Skyr nature", marque:"Pot 450 g", rayon:"Laitages et œufs", ean:"206342500027",
+   portion:150, pas:10, pesee:"poids net", pour100:{kcal:63,p:11,g:4,l:0.2}, mots:"yaourt fromage blanc"},
+  {id:"emmental", nom:"Emmental râpé", marque:"Sachet 200 g", rayon:"Laitages et œufs", ean:"206905700051",
+   portion:20, pas:5, pesee:"poids net", pour100:{kcal:372,p:28,g:0,l:29}, mots:"fromage gruyere"},
+  {id:"brocolis", nom:"Brocolis", marque:"Surgelés · sachet 1 kg", rayon:"Légumes", ean:"207458200096",
+   portion:200, pas:25, pesee:"poids surgelé", pour100:{kcal:31,p:3,g:2.5,l:0.5}},
+  {id:"haricots", nom:"Haricots verts", marque:"Surgelés · sachet 1 kg", rayon:"Légumes", ean:"207731600043",
+   portion:200, pas:25, pesee:"poids surgelé", pour100:{kcal:30,p:1.9,g:3.6,l:0.2}},
+  {id:"huile", nom:"Huile d'olive", marque:"Bouteille 75 cl · 1 c. à soupe rase", rayon:"Matières grasses", ean:"208814300072",
+   portion:10, pas:5, pesee:"poids net", pour100:{kcal:900,p:0,g:0,l:100}}
+];
+
+/* ---------- Code-barres EAN-13 dessiné en SVG ---------- */
+const L = ["0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"];
+const R = L.map(function(s){ return s.replace(/[01]/g, function(c){ return c === "0" ? "1" : "0"; }); });
+const G = R.map(function(s){ return s.split("").reverse().join(""); });
+const PARITE = ["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
+
+function cle(d12){
+  let s = 0;
+  for (let i = 0; i < 12; i++) s += Number(d12[i]) * (i % 2 ? 3 : 1);
+  return (10 - s % 10) % 10;
+}
+function ean13(code){
+  const d = String(code).replace(/\D/g, "");
+  return d.length === 12 ? d + cle(d) : d;
+}
+function modules(ean){
+  const p = PARITE[Number(ean[0])];
+  let m = "101";
+  for (let i = 1; i <= 6; i++) m += (p[i - 1] === "L" ? L : G)[Number(ean[i])];
+  m += "01010";
+  for (let i = 7; i <= 12; i++) m += R[Number(ean[i])];
+  return m + "101";
+}
+function svgCode(ean){
+  const m = modules(ean), marge = 11, largeur = marge + 95 + 7;
+  let barres = "", i = 0;
+  while (i < 95) {
+    if (m[i] === "1") {
+      let j = i;
+      while (j < 95 && m[j] === "1") j++;
+      const garde = i < 3 || (i >= 45 && i < 50) || i >= 92;
+      barres += '<rect x="' + (marge + i) + '" y="0" width="' + (j - i) + '" height="' + (garde ? 57 : 51) + '"/>';
+      i = j;
+    } else i++;
+  }
+  let chiffres = '<text x="' + (marge - 6) + '" y="62">' + ean[0] + '</text>';
+  for (let k = 0; k < 6; k++) {
+    chiffres += '<text x="' + (marge + 3 + 7 * k + 3.5) + '" y="62">' + ean[1 + k] + '</text>';
+    chiffres += '<text x="' + (marge + 50 + 7 * k + 3.5) + '" y="62">' + ean[7 + k] + '</text>';
+  }
+  return '<svg viewBox="0 0 ' + largeur + ' 64" role="img" aria-label="Code-barres ' + ean + '" shape-rendering="crispEdges">' +
+    '<g fill="var(--barres)">' + barres + '</g>' +
+    '<g fill="var(--barres)" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="8.5" text-anchor="middle">' + chiffres + '</g></svg>';
+}
+
+/* ---------- Calculs ---------- */
+const nf = new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 1});
+const nf0 = new Intl.NumberFormat("fr-FR", {maximumFractionDigits: 0});
+function grammes(p, n){ return p.unite ? n * p.gParUnite : n; }
+function libelle(p, n){ return p.unite ? n + " " + p.unite + (n > 1 ? "s" : "") : nf0.format(n) + " g"; }
+function valeurs(p, n){
+  const k = grammes(p, n) / 100;
+  return {kcal: p.pour100.kcal * k, p: p.pour100.p * k, g: p.pour100.g * k, l: p.pour100.l * k};
+}
+function simplifie(s){
+  return s.toLowerCase().replace(/œ/g, "oe").normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+/* ---------- Rendu ---------- */
+const rayon = document.getElementById("rayon");
+const etat = {};      // portion courante par produit
+const cartes = {};    // éléments de chaque étiquette
+
+PRODUITS.forEach(function(p){
+  p.ean = ean13(p.ean);
+  etat[p.id] = {n: p.portion, cruTouche: false};
+  const cuit = typeof p.cuisson === "number";
+  const art = document.createElement("article");
+  art.className = "etiquette";
+  art.innerHTML =
+    '<div class="corps"><div class="infos">' +
+      '<div class="entete"><p class="rayon-nom">' + p.rayon + '</p><h2>' + p.nom + '</h2><p class="marque">' + p.marque + '</p></div>' +
+      '<div class="ligne-prix">' +
+        '<div class="prix"><span class="kcal" data-r="kcal"></span><span class="unite">kcal</span></div>' +
+        '<div class="portion"><p class="portion-titre">Ma portion</p>' +
+          '<div class="pas"><button type="button" data-a="moins" aria-label="Diminuer la portion : ' + p.nom + '">−</button>' +
+          '<output class="quantite" data-r="qte"></output>' +
+          '<button type="button" data-a="plus" aria-label="Augmenter la portion : ' + p.nom + '">+</button></div>' +
+          '<p class="pesee"><span data-r="pesee"></span> <button type="button" class="retour" data-a="retour" hidden>Revenir à ' + libelle(p, p.portion) + '</button></p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="macros"><div class="barre" aria-hidden="true"><i class="p"></i><i class="g"></i><i class="l"></i></div>' +
+        '<dl><div><dt><span class="puce p"></span>Protéines</dt><dd data-r="p"></dd></div>' +
+        '<div><dt><span class="puce g"></span>Glucides</dt><dd data-r="g"></dd></div>' +
+        '<div><dt><span class="puce l"></span>Lipides</dt><dd data-r="l"></dd></div></dl></div>' +
+      (cuit ? '<p class="cuit" data-r="cuit"></p>' +
+        '<details class="casserole"><summary>Je cuisine pour deux</summary><div class="cass-corps">' +
+          '<label for="cru-' + p.id + '">Cru versé dans la casserole<span class="champ"><input id="cru-' + p.id + '" type="number" inputmode="numeric" min="0" step="10"> g</span></label>' +
+          '<label for="cuit-' + p.id + '">Poids cuit total, si tu le pèses<span class="champ"><input id="cuit-' + p.id + '" type="number" inputmode="numeric" min="0" step="10"> g</span></label>' +
+          '<p class="cass-res" data-r="part"></p>' +
+        '</div></details>' : '') +
+      '<p class="cent">Pour 100 g (' + p.pesee + ') : ' + nf0.format(p.pour100.kcal) + ' kcal · P ' + nf.format(p.pour100.p) + ' g · G ' + nf.format(p.pour100.g) + ' g · L ' + nf.format(p.pour100.l) + ' g</p>' +
+    '</div>' +
+    '<div class="code"><button type="button" class="plaque" data-a="scan" aria-label="Agrandir le code-barres : ' + p.nom + ', ' + p.ean + '">' + svgCode(p.ean) + '</button>' +
+      '<p class="code-note">' + (p.reel ? '<b>Vrai code produit.</b> ' : 'Code d\'exemple. ') + 'Clique pour l\'agrandir.</p></div></div>';
+  rayon.appendChild(art);
+
+  const r = {};
+  art.querySelectorAll("[data-r]").forEach(function(el){ r[el.dataset.r] = el; });
+  cartes[p.id] = {
+    art: art, r: r,
+    barre: art.querySelectorAll(".barre i"),
+    retour: art.querySelector('[data-a="retour"]'),
+    cru: art.querySelector("#cru-" + CSS.escape(p.id)),
+    cuitTotal: art.querySelector("#cuit-" + CSS.escape(p.id)),
+    texte: simplifie([p.nom, p.marque, p.rayon, p.ean, p.mots || ""].join(" "))
+  };
+
+  art.addEventListener("click", function(e){
+    const b = e.target.closest("[data-a]");
+    if (!b) return;
+    const a = b.dataset.a, s = etat[p.id];
+    if (a === "plus") s.n = Math.min(s.n + p.pas, p.unite ? 12 : 1000);
+    else if (a === "moins") s.n = Math.max(s.n - p.pas, p.pas);
+    else if (a === "retour") s.n = p.portion;
+    else if (a === "scan") { ouvrirScan(p, b); return; }
+    maj(p);
+  });
+  if (cuit) {
+    cartes[p.id].cru.addEventListener("input", function(){ etat[p.id].cruTouche = true; majCasserole(p); });
+    cartes[p.id].cuitTotal.addEventListener("input", function(){ majCasserole(p); });
+  }
+  maj(p);
+});
+
+function maj(p){
+  const c = cartes[p.id], n = etat[p.id].n, v = valeurs(p, n);
+  c.r.kcal.textContent = nf0.format(v.kcal);
+  c.r.qte.textContent = libelle(p, n);
+  c.r.pesee.textContent = p.unite ? "≈ " + nf0.format(grammes(p, n)) + " g, " + p.pesee : p.pesee;
+  c.r.p.textContent = nf.format(v.p) + " g";
+  c.r.g.textContent = nf.format(v.g) + " g";
+  c.r.l.textContent = nf.format(v.l) + " g";
+  const parts = [v.p * 4, v.g * 4, v.l * 9];
+  c.barre.forEach(function(el, i){ el.style.flex = parts[i] + " 1 0"; el.hidden = parts[i] <= 0; });
+  c.retour.hidden = n === p.portion;
+  if (typeof p.cuisson === "number") {
+    const g = grammes(p, n);
+    c.r.cuit.innerHTML = p.cuisson === 1
+      ? 'Dans l\'assiette : <strong>≈ ' + nf0.format(g) + ' g</strong> <span>après cuisson, le poids ne bouge presque pas</span>'
+      : 'Dans l\'assiette : <strong>≈ ' + nf0.format(g * p.cuisson) + ' g</strong> <span>après cuisson (× ' + nf.format(p.cuisson) + ')</span>';
+    if (!etat[p.id].cruTouche) c.cru.value = g * 2;
+    majCasserole(p);
+  }
+}
+
+function majCasserole(p){
+  const c = cartes[p.id], g = grammes(p, etat[p.id].n);
+  const cru = parseFloat(c.cru.value);
+  const estime = (cru > 0 ? cru : 0) * p.cuisson;
+  c.cuitTotal.placeholder = cru > 0 ? "≈ " + nf0.format(estime) : "";
+  if (!(cru > 0)) { c.r.part.textContent = "Indique le poids cru versé pour calculer ta part."; return; }
+  if (cru < g) { c.r.part.textContent = "Ta portion (" + nf0.format(g) + " g) dépasse ce que tu as versé."; return; }
+  const pese = parseFloat(c.cuitTotal.value);
+  const total = pese > 0 ? pese : estime;
+  c.r.part.innerHTML = 'Ta part : <strong>' + (pese > 0 ? '' : '≈ ') + nf0.format(total * g / cru) + ' g cuits</strong>, soit ' +
+    nf0.format(100 * g / cru) + ' % de la casserole' + (pese > 0 ? '.' : ' (estimation, pèse la casserole pour être exact).');
+}
+
+/* ---------- Recherche et filtres ---------- */
+const champ = document.getElementById("recherche");
+const compte = document.getElementById("compte");
+const vide = document.getElementById("vide");
+const zoneFiltres = document.getElementById("filtres");
+let rayonActif = "Tout";
+
+["Tout"].concat(PRODUITS.map(function(p){ return p.rayon; }).filter(function(x, i, a){ return a.indexOf(x) === i; }))
+  .forEach(function(nom){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "filtre"; b.textContent = nom;
+    b.setAttribute("aria-pressed", nom === rayonActif ? "true" : "false");
+    b.addEventListener("click", function(){
+      rayonActif = nom;
+      zoneFiltres.querySelectorAll(".filtre").forEach(function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      filtrer();
+    });
+    zoneFiltres.appendChild(b);
+  });
+
+function filtrer(){
+  const mots = simplifie(champ.value.trim()).split(/\s+/).filter(Boolean);
+  let vus = 0;
+  PRODUITS.forEach(function(p){
+    const c = cartes[p.id];
+    const ok = (rayonActif === "Tout" || p.rayon === rayonActif) && mots.every(function(m){ return c.texte.indexOf(m) !== -1; });
+    c.art.hidden = !ok;
+    if (ok) vus++;
+  });
+  const total = PRODUITS.length;
+  compte.textContent = vus === total ? total + " produits" : vus + " produit" + (vus > 1 ? "s" : "") + " sur " + total;
+  vide.hidden = vus > 0;
+  if (!vus) vide.textContent = champ.value.trim()
+    ? "Aucun produit ne correspond à « " + champ.value.trim() + " »" + (rayonActif === "Tout" ? "." : " dans " + rayonActif + ".")
+    : "Aucun produit dans ce rayon.";
+}
+champ.addEventListener("input", filtrer);
+filtrer();
+
+/* ---------- Mode scan ---------- */
+const scan = document.getElementById("scan");
+const fermer = document.getElementById("scan-fermer");
+let origine = null;
+
+function ouvrirScan(p, bouton){
+  const n = etat[p.id].n, v = valeurs(p, n);
+  origine = bouton;
+  document.getElementById("scan-cat").textContent = p.rayon + " · " + p.marque;
+  document.getElementById("scan-nom").textContent = p.nom;
+  document.getElementById("scan-code").innerHTML = svgCode(p.ean);
+  document.getElementById("scan-qte").textContent = p.unite ? libelle(p, n) : nf0.format(n) + " g";
+  document.getElementById("scan-kcal").textContent = "Quantité en " + p.pesee + ". Tu dois retrouver environ " + nf0.format(v.kcal) +
+    " kcal · P " + nf.format(v.p) + " g · G " + nf.format(v.g) + " g · L " + nf.format(v.l) + " g.";
+  scan.hidden = false;
+  fermer.focus();
+}
+function fermerScan(){
+  scan.hidden = true;
+  if (origine) origine.focus();
+  origine = null;
+}
+fermer.addEventListener("click", fermerScan);
+scan.addEventListener("click", function(e){ if (e.target === scan) fermerScan(); });
+document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !scan.hidden) fermerScan(); });
+
+})();
+</script>
+
+</body>
+</html>
