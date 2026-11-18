@@ -53,6 +53,17 @@ button,input{font:inherit;color:inherit}
 h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-height:.95;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
 .chapo{max-width:62ch;color:var(--sourdine);font-size:16px}
 
+/* Objectif du jour (valeurs fixes, reprises de Yazio) */
+.objectif{background:var(--etiquette);border:1px solid var(--filet);border-radius:4px;padding:16px;display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center}
+.obj-total{display:flex;flex-direction:column;gap:4px}
+.obj-titre{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sourdine)}
+.obj-macros{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.obj-macros dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.obj-macros dt{font-size:12px;color:var(--sourdine);display:flex;align-items:center;gap:5px}
+.obj-macros dd{font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.obj-macros dd small{display:block;font-weight:400;font-size:12.5px;color:var(--sourdine)}
+.objectif .barre{height:10px}
+
 /* Recherche et filtres */
 .outils{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--fond);padding-block:10px;border-bottom:1px solid var(--filet);display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
 .recherche{flex:1 1 280px;min-width:0;max-width:460px}
@@ -151,6 +162,21 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
     <h1>Placard à portions</h1>
     <p class="chapo">Tes produits de base, la portion que tu te sers, ce qu'elle pèse une fois cuite, et le code-barres à scanner dans Yazio sans ressortir l'emballage.</p>
   </header>
+
+  <section class="objectif" aria-labelledby="obj-titre">
+    <div class="obj-total">
+      <h2 class="obj-titre" id="obj-titre">Mon objectif par jour</h2>
+      <div class="prix"><span class="kcal">2 250</span><span class="unite">kcal</span></div>
+    </div>
+    <div class="obj-macros">
+      <div class="barre" aria-hidden="true"><i class="p" style="flex:35 1 0"></i><i class="g" style="flex:40 1 0"></i><i class="l" style="flex:25 1 0"></i></div>
+      <dl>
+        <div><dt><span class="puce p"></span>Protéines</dt><dd>192 g<small>35 % · 788 kcal</small></dd></div>
+        <div><dt><span class="puce g"></span>Glucides</dt><dd>220 g<small>40 % · 900 kcal</small></dd></div>
+        <div><dt><span class="puce l"></span>Lipides</dt><dd>60 g<small>25 % · 563 kcal</small></dd></div>
+      </dl>
+    </div>
+  </section>
 
   <div class="outils">
     <label class="recherche" for="recherche">
