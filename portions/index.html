@@ -142,6 +142,11 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
 .plaque svg,.scan-plaque svg{display:block;width:100%;height:auto}
 .code-note{font-size:12.5px;color:var(--sourdine)}
 .code-note b{font-weight:600;color:var(--encre)}
+.sans-code{display:grid;place-items:center;min-height:96px;border:1.5px dashed var(--filet);border-radius:2px;color:var(--sourdine);font-size:13px;text-align:center;padding:8px}
+.moments{display:flex;flex-wrap:wrap;gap:6px}
+.moment{height:30px;padding:0 10px;border:1px solid var(--filet);border-radius:4px;background:transparent;font-size:13px;font-weight:500;cursor:pointer}
+.moment:hover{border-color:var(--encre)}
+.moment[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:var(--etiquette)}
 
 .vide{padding:32px 0;color:var(--sourdine);font-size:16px}
 .note{border-top:1px solid var(--filet);padding-top:14px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--sourdine);max-width:75ch}
@@ -165,7 +170,7 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
 <div class="page">
   <header class="tete">
     <a class="accueil" href="../">← Accueil</a>
-    <p class="surtitre">FatLoss · maquette</p>
+    <p class="surtitre">FatLoss</p>
     <h1>Placard à portions</h1>
     <p class="chapo">Tes produits de base, la portion que tu te sers, ce qu'elle pèse une fois cuite, et le code-barres à scanner dans Yazio sans ressortir l'emballage.</p>
   </header>
@@ -207,8 +212,8 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
   <p class="vide" id="vide" hidden></p>
 
   <footer class="note">
-    <p>Maquette : les produits, les portions et les valeurs nutritionnelles sont des exemples (moyennes pour 100 g). Sur le vrai site, tu y mets les chiffres de tes emballages.</p>
-    <p>Seul le code des penne Barilla est un vrai code produit, pour tester le scan sur écran avec Yazio. Les autres commencent par 2, un préfixe réservé à l'usage interne des magasins : ils ne correspondent à aucun produit.</p>
+    <p>Valeurs pour 100 g relevées sur les emballages. Pour les conserves, elles sont données égouttées : pèse ce que tu mets dans l'assiette, sans le jus.</p>
+    <p>Steak haché : valeurs moyennes du haché 5 % Carrefour, le tableau de la barquette n'a pas été relevé. Scanne le code dans Yazio pour les chiffres exacts.</p>
     <p>Les coefficients de cuisson sont des moyennes. Si tu pèses la casserole cuite, le calcul « Je cuisine pour deux » n'en a plus besoin.</p>
   </footer>
 </div>
@@ -229,48 +234,44 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
 "use strict";
 
 /* ---------- Données : c'est la seule partie à modifier pour ajouter un produit ---------- */
-/* ean : 13 chiffres (vrai code) ou 12 chiffres (la clé de contrôle est calculée).
-   portion : en grammes, ou en unités si "unite" est renseigné.
-   cuisson : poids cuit = poids cru × coefficient. */
+/* ean : les 13 chiffres sous le code-barres ("" si pas encore de code).
+   pour100 : valeurs pour 100 g lues sur l'emballage (kcal, p = protéines, g = glucides, l = lipides).
+   portion : portion par défaut, en grammes (ou en unités si "unite" est renseigné).
+   moments : portions toutes prêtes, par exemple {Midi:100, Soir:65}.
+   cuisson : poids cuit = poids cru × coefficient (moyenne). */
 const PRODUITS = [
-  {id:"penne", nom:"Penne rigate", marque:"Barilla · paquet 500 g", rayon:"Féculents", ean:"8076802085738", reel:true,
-   portion:100, pas:10, pesee:"poids cru", cuisson:2.2, pour100:{kcal:359,p:12.5,g:71.2,l:2}, mots:"pates pâtes"},
-  {id:"riz", nom:"Riz basmati", marque:"Sachet 1 kg", rayon:"Féculents", ean:"200417300021",
-   portion:100, pas:10, pesee:"poids cru", cuisson:2.8, pour100:{kcal:351,p:8.2,g:77,l:0.9}},
-  {id:"pdt", nom:"Pommes de terre", marque:"Filet 2,5 kg · à l'eau", rayon:"Féculents", ean:"200893100054",
-   portion:250, pas:25, pesee:"poids cru, épluchées", cuisson:1, pour100:{kcal:80,p:2,g:16.7,l:0.1}, mots:"patates"},
-  {id:"semoule", nom:"Semoule de blé", marque:"Moyenne · boîte 500 g", rayon:"Féculents", ean:"201530900012",
-   portion:80, pas:10, pesee:"poids sec", cuisson:2.4, pour100:{kcal:357,p:12.5,g:72,l:1.5}, mots:"couscous"},
-  {id:"quinoa", nom:"Quinoa", marque:"Sachet 400 g", rayon:"Féculents", ean:"202118400067",
-   portion:70, pas:10, pesee:"poids sec", cuisson:2.8, pour100:{kcal:368,p:14,g:64,l:6}},
-  {id:"patate-douce", nom:"Patate douce", marque:"Vrac · au four", rayon:"Féculents", ean:"202476500093",
-   portion:250, pas:25, pesee:"poids cru, épluchée", cuisson:0.9, pour100:{kcal:86,p:1.6,g:20,l:0.1}},
-  {id:"avoine", nom:"Flocons d'avoine", marque:"Sachet 500 g", rayon:"Féculents", ean:"208296400018",
-   portion:50, pas:5, pesee:"poids sec", pour100:{kcal:372,p:13.5,g:58.7,l:7}, mots:"porridge petit dejeuner"},
-  {id:"lentilles", nom:"Lentilles vertes", marque:"Sachet 500 g", rayon:"Légumineuses", ean:"201264700038",
-   portion:80, pas:10, pesee:"poids sec", cuisson:2.5, pour100:{kcal:332,p:25,g:48,l:1.5}},
-  {id:"pois-chiches", nom:"Pois chiches", marque:"Bocal 400 g · déjà cuits", rayon:"Légumineuses", ean:"203051200041",
-   portion:130, pas:10, pesee:"poids égoutté", pour100:{kcal:139,p:7.5,g:17,l:3}},
-  {id:"poulet", nom:"Blanc de poulet", marque:"Barquette de 4 filets", rayon:"Viandes et poissons", ean:"203389600075",
-   portion:150, pas:10, pesee:"poids cru", cuisson:0.75, pour100:{kcal:110,p:23.5,g:0,l:1.5}, mots:"viande volaille"},
-  {id:"steak", nom:"Steak haché 5 %", marque:"Barquette de 2 × 125 g", rayon:"Viandes et poissons", ean:"204127800016",
-   portion:125, pas:25, pesee:"poids cru", cuisson:0.8, pour100:{kcal:125,p:21,g:0,l:5}, mots:"viande boeuf bœuf"},
-  {id:"saumon", nom:"Pavé de saumon", marque:"Barquette de 2 pavés", rayon:"Viandes et poissons", ean:"204660300082",
-   portion:130, pas:10, pesee:"poids cru", cuisson:0.85, pour100:{kcal:200,p:20,g:0,l:13}, mots:"poisson"},
-  {id:"thon", nom:"Thon au naturel", marque:"Boîte 140 g", rayon:"Viandes et poissons", ean:"205214900034",
-   portion:100, pas:10, pesee:"poids égoutté", pour100:{kcal:109,p:25,g:0,l:1}, mots:"poisson conserve"},
-  {id:"oeufs", nom:"Œufs", marque:"Boîte de 6 · calibre moyen", rayon:"Laitages et œufs", ean:"205873100069",
-   portion:2, pas:1, unite:"œuf", gParUnite:55, pesee:"sans la coquille", pour100:{kcal:140,p:12.5,g:0.7,l:9.8}},
-  {id:"skyr", nom:"Skyr nature", marque:"Pot 450 g", rayon:"Laitages et œufs", ean:"206342500027",
-   portion:150, pas:10, pesee:"poids net", pour100:{kcal:63,p:11,g:4,l:0.2}, mots:"yaourt fromage blanc"},
-  {id:"emmental", nom:"Emmental râpé", marque:"Sachet 200 g", rayon:"Laitages et œufs", ean:"206905700051",
-   portion:20, pas:5, pesee:"poids net", pour100:{kcal:372,p:28,g:0,l:29}, mots:"fromage gruyere"},
-  {id:"brocolis", nom:"Brocolis", marque:"Surgelés · sachet 1 kg", rayon:"Légumes", ean:"207458200096",
-   portion:200, pas:25, pesee:"poids surgelé", pour100:{kcal:31,p:3,g:2.5,l:0.5}},
-  {id:"haricots", nom:"Haricots verts", marque:"Surgelés · sachet 1 kg", rayon:"Légumes", ean:"207731600043",
-   portion:200, pas:25, pesee:"poids surgelé", pour100:{kcal:30,p:1.9,g:3.6,l:0.2}},
-  {id:"huile", nom:"Huile d'olive", marque:"Bouteille 75 cl · 1 c. à soupe rase", rayon:"Matières grasses", ean:"208814300072",
-   portion:10, pas:5, pesee:"poids net", pour100:{kcal:900,p:0,g:0,l:100}}
+  /* Féculents : 100 g cru le midi ; le soir, environ 40 % des 563 kcal du dîner */
+  {id:"penne", nom:"Penne rigate", marque:"Carrefour Classic' · paquet 1 kg · 10-12 min", rayon:"Féculents", ean:"3560070554027",
+   portion:100, moments:{Midi:100, Soir:65}, pas:5, pesee:"poids cru", cuisson:2.2,
+   pour100:{kcal:355,p:12,g:72,l:1.5}, mots:"pates pâtes"},
+  {id:"riz", nom:"Riz basmati", marque:"Carrefour Extra · sachet 1 kg", rayon:"Féculents", ean:"3560070837984",
+   portion:100, moments:{Midi:100, Soir:65}, pas:5, pesee:"poids cru", cuisson:2.8,
+   pour100:{kcal:349,p:8.3,g:76,l:1}},
+  {id:"ble", nom:"Blé", marque:"Carrefour Classic' · boîte 1 kg · 10 min", rayon:"Féculents", ean:"3560071549145",
+   portion:100, moments:{Midi:100, Soir:65}, pas:5, pesee:"poids cru", cuisson:2.5,
+   pour100:{kcal:348,p:15,g:64,l:2}, mots:"ebly"},
+  {id:"avoine", nom:"Flocons d'avoine complète", marque:"Carrefour · sachet 500 g", rayon:"Féculents", ean:"3560071551674",
+   portion:50, pas:5, pesee:"poids sec", pour100:{kcal:372,p:14,g:59,l:7}, mots:"porridge petit dejeuner"},
+
+  {id:"lentilles", nom:"Lentilles", marque:"Carrefour Classic' · boîte 800 g · déjà cuites", rayon:"Légumineuses", ean:"3560070329472",
+   portion:150, pas:10, pesee:"poids égoutté", pour100:{kcal:90,p:7,g:12,l:0.7}},
+
+  {id:"steak", nom:"Steak haché 5 % maison", marque:"Carrefour Le Marché · barquette 800 g · steaks de 100 g congelés", rayon:"Viandes", ean:"3245415961165",
+   portion:1, pas:1, unite:"steak", gParUnite:100, pesee:"poids cru", pour100:{kcal:125,p:20,g:0,l:5}, estime:true,
+   mots:"viande hachee boeuf bœuf rouge"},
+
+  {id:"haricots", nom:"Haricots verts extra-fins", marque:"Carrefour Classic' · boîte 800 g", rayon:"Légumes", ean:"3560070323067",
+   portion:200, pas:25, pesee:"poids égoutté", pour100:{kcal:24,p:1.3,g:2.3,l:0}},
+  {id:"champignons", nom:"Champignons de Paris", marque:"Carrefour Classic' · pieds et morceaux · petite boîte", rayon:"Légumes", ean:"3560070202478",
+   portion:100, pas:25, pesee:"poids égoutté", pour100:{kcal:18,p:1.7,g:0.9,l:0}},
+
+  {id:"creme", nom:"Crème légère semi-épaisse 4 %", marque:"Carrefour Classic' · brique 20 cl", rayon:"Laitages", ean:"3560071099220",
+   portion:30, pas:5, pesee:"poids net", pour100:{kcal:75,p:2.8,g:7,l:4}, mots:"creme fraiche sauce"},
+
+  {id:"compote", nom:"Compote pomme allégée", marque:"Carrefour Classic' · bocal · −30 % de sucres", rayon:"Sucré", ean:"3560071231873",
+   portion:100, pas:10, pesee:"poids net", pour100:{kcal:62,p:0,g:14,l:0}, mots:"dessert fruit"},
+  {id:"miel", nom:"Miel de fleurs liquide", marque:"Meli · pot 1 kg", rayon:"Sucré", ean:"5411536721003",
+   portion:10, pas:5, pesee:"poids net · 1 c. à café ≈ 7 g", pour100:{kcal:320,p:0.5,g:79,l:0}}
 ];
 
 /* ---------- Code-barres EAN-13 dessiné en SVG ---------- */
@@ -351,6 +352,9 @@ PRODUITS.forEach(function(p){
           '<div class="pas"><button type="button" data-a="moins" aria-label="Diminuer la portion : ' + p.nom + '">−</button>' +
           '<output class="quantite" data-r="qte"></output>' +
           '<button type="button" data-a="plus" aria-label="Augmenter la portion : ' + p.nom + '">+</button></div>' +
+          (p.moments ? '<div class="moments" role="group" aria-label="Portion selon le repas">' +
+            Object.keys(p.moments).map(function(k){ return '<button type="button" class="moment" data-a="moment" data-k="' + k + '" aria-pressed="false">' + k + ' · ' + libelle(p, p.moments[k]) + '</button>'; }).join("") +
+          '</div>' : '') +
           '<p class="pesee"><span data-r="pesee"></span> <button type="button" class="retour" data-a="retour" hidden>Revenir à ' + libelle(p, p.portion) + '</button></p>' +
         '</div>' +
       '</div>' +
@@ -366,8 +370,12 @@ PRODUITS.forEach(function(p){
         '</div></details>' : '') +
       '<p class="cent">Pour 100 g (' + p.pesee + ') : ' + nf0.format(p.pour100.kcal) + ' kcal · P ' + nf.format(p.pour100.p) + ' g · G ' + nf.format(p.pour100.g) + ' g · L ' + nf.format(p.pour100.l) + ' g</p>' +
     '</div>' +
-    '<div class="code"><button type="button" class="plaque" data-a="scan" aria-label="Agrandir le code-barres : ' + p.nom + ', ' + p.ean + '">' + svgCode(p.ean) + '</button>' +
-      '<p class="code-note">' + (p.reel ? '<b>Vrai code produit.</b> ' : 'Code d\'exemple. ') + 'Clique pour l\'agrandir.</p></div></div>';
+    (p.ean
+      ? '<div class="code"><button type="button" class="plaque" data-a="scan" aria-label="Agrandir le code-barres : ' + p.nom + ', ' + p.ean + '">' + svgCode(p.ean) + '</button>' +
+        '<p class="code-note">Clique pour l\'agrandir.' + (p.estime ? ' Les valeurs du site sont des moyennes : celles de Yazio priment.' : '') + '</p></div>'
+      : '<div class="code"><div class="sans-code">Code-barres à ajouter</div>' +
+        '<p class="code-note">En attendant, cherche « ' + p.nom + ' ' + p.marque.split(" · ")[0] + ' » dans Yazio.</p></div>') +
+    '</div>';
   rayon.appendChild(art);
 
   const r = {};
@@ -375,6 +383,7 @@ PRODUITS.forEach(function(p){
   cartes[p.id] = {
     art: art, r: r,
     barre: art.querySelectorAll(".barre i"),
+    moments: art.querySelectorAll(".moment"),
     retour: art.querySelector('[data-a="retour"]'),
     cru: art.querySelector("#cru-" + CSS.escape(p.id)),
     cuitTotal: art.querySelector("#cuit-" + CSS.escape(p.id)),
@@ -388,6 +397,7 @@ PRODUITS.forEach(function(p){
     if (a === "plus") s.n = Math.min(s.n + p.pas, p.unite ? 12 : 1000);
     else if (a === "moins") s.n = Math.max(s.n - p.pas, p.pas);
     else if (a === "retour") s.n = p.portion;
+    else if (a === "moment") s.n = p.moments[b.dataset.k];
     else if (a === "scan") { ouvrirScan(p, b); return; }
     maj(p);
   });
@@ -408,7 +418,8 @@ function maj(p){
   c.r.l.textContent = nf.format(v.l) + " g";
   const parts = [v.p * 4, v.g * 4, v.l * 9];
   c.barre.forEach(function(el, i){ el.style.flex = parts[i] + " 1 0"; el.hidden = parts[i] <= 0; });
-  c.retour.hidden = n === p.portion;
+  c.retour.hidden = n === p.portion || !!p.moments;
+  c.moments.forEach(function(b){ b.setAttribute("aria-pressed", p.moments[b.dataset.k] === n ? "true" : "false"); });
   if (typeof p.cuisson === "number") {
     const g = grammes(p, n);
     c.r.cuit.innerHTML = p.cuisson === 1
