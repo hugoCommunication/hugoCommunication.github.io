@@ -13,7 +13,7 @@
   --fond:#E6EBE8; --etiquette:#FFFFFF; --encre:#13201A; --sourdine:#56655E; --filet:#C5CFCA;
   --jaune:#F5C400; --sur-jaune:#13201A;
   --prot:#17805E; --gluc:#2F66C4; --lip:#C8601A;
-  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(19,32,26,.74);
+  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(19,32,26,.74); --alerte:#C2412D;
   --titre:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
   --texte:"Barlow","Helvetica Neue",Arial,sans-serif;
   color-scheme:light;
@@ -23,7 +23,7 @@
     --fond:#0F1613; --etiquette:#1A2420; --encre:#E9F0EC; --sourdine:#95A69D; --filet:#2D3B35;
     --jaune:#F5C400; --sur-jaune:#13201A;
     --prot:#45C79B; --gluc:#7FA6F5; --lip:#F29B58;
-    --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8);
+    --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8); --alerte:#FF7A66;
     color-scheme:dark;
   }
 }
@@ -31,7 +31,7 @@
   --fond:#0F1613; --etiquette:#1A2420; --encre:#E9F0EC; --sourdine:#95A69D; --filet:#2D3B35;
   --jaune:#F5C400; --sur-jaune:#13201A;
   --prot:#45C79B; --gluc:#7FA6F5; --lip:#F29B58;
-  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8);
+  --plaque:#FFFFFF; --barres:#000000; --voile:rgba(0,0,0,.8); --alerte:#FF7A66;
   color-scheme:dark;
 }
 
@@ -43,7 +43,7 @@ button,input{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--encre);outline-offset:2px}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
-.page{max-width:1500px;margin-inline:auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 56px;display:flex;flex-direction:column;gap:18px}
+.page{max-width:1500px;margin-inline:auto;padding-inline:clamp(16px,3vw,40px);padding-block:28px 140px;display:flex;flex-direction:column;gap:18px}
 
 /* En-tête */
 .tete{display:flex;flex-direction:column;gap:6px}
@@ -160,6 +160,39 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
 .scan-kcal{font-size:14px;color:var(--sourdine);font-variant-numeric:tabular-nums}
 .fermer{align-self:flex-end;height:42px;padding:0 20px;border:1.5px solid var(--encre);border-radius:4px;background:var(--encre);color:var(--etiquette);font-weight:600;cursor:pointer}
 
+/* Mon plat : panier en bas de page, remis à zéro à chaque rechargement */
+.ajouter{height:40px;width:100%;border:1.5px solid var(--encre);border-radius:4px;background:var(--encre);color:var(--etiquette);font-weight:600;cursor:pointer}
+.ajouter:hover{opacity:.9}
+.ajouter.ok{background:var(--prot);border-color:var(--prot);color:#fff}
+.plat{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;flex-direction:column;align-items:center;pointer-events:none;padding:0 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.plat>*{pointer-events:auto;width:100%;max-width:640px}
+.plat-barre{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;text-align:left;padding:12px 16px;border:1.5px solid var(--encre);border-radius:6px;background:var(--etiquette);cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,.18)}
+.plat-resume{font-size:14px;color:var(--sourdine);min-width:0}
+.plat-resume strong{font-family:var(--titre);font-weight:700;font-size:26px;line-height:1;color:var(--encre);font-variant-numeric:tabular-nums}
+.plat-etat{font-size:13px;font-weight:600;justify-self:end;white-space:nowrap}
+.plat-jauge{grid-column:1/-1;height:8px;background:var(--fond);border-radius:4px;overflow:hidden}
+.plat-jauge i{display:block;height:100%;width:0;background:var(--prot)}
+.plat.depasse .plat-jauge i{background:var(--alerte)}
+.plat.depasse .plat-etat{color:var(--alerte)}
+.plat-detail{margin-bottom:8px;max-height:62vh;overflow:auto;background:var(--etiquette);border:1.5px solid var(--encre);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:0 6px 22px rgba(0,0,0,.18)}
+.plat-tete{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.plat-tete h2{font-family:var(--titre);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+.plat-vider{border:0;background:none;padding:0;font-size:13px;text-decoration:underline;text-underline-offset:2px;cursor:pointer;color:var(--sourdine)}
+.plat-liste{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plat-liste li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--filet)}
+.plat-nom{font-weight:600;font-size:14px;min-width:0}
+.plat-nom small{display:block;font-weight:400;font-size:12px;color:var(--sourdine)}
+.plat-qte{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--sourdine)}
+.plat-qte input{width:70px;height:34px;padding:0 6px;border:1px solid var(--filet);border-radius:4px;background:var(--fond);color:var(--encre);text-align:right;font-variant-numeric:tabular-nums}
+.plat-k{min-width:62px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.plat-suppr{width:32px;height:32px;border:1px solid var(--filet);border-radius:4px;background:transparent;font-size:18px;line-height:1;cursor:pointer}
+.plat-suppr:hover{border-color:var(--encre)}
+.plat-vide{font-size:14px;color:var(--sourdine)}
+.plat-macros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.plat-macros dt{font-size:12px;color:var(--sourdine);display:flex;align-items:center;gap:5px}
+.plat-macros dd{margin:0;font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.plat-note{font-size:12.5px;color:var(--sourdine)}
+
 @media (prefers-reduced-motion:no-preference){
   .filtre,.pas button,.plaque{transition:background-color .12s,border-color .12s,color .12s}
 }
@@ -217,6 +250,22 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
     <p>Les coefficients de cuisson sont des moyennes. Si tu pèses la casserole cuite, le calcul « Je cuisine pour deux » n'en a plus besoin.</p>
   </footer>
 </div>
+
+<aside class="plat" id="plat" aria-label="Mon plat">
+  <div class="plat-detail" id="plat-detail" hidden>
+    <div class="plat-tete"><h2>Mon plat</h2><button type="button" class="plat-vider" id="plat-vider">Tout enlever</button></div>
+    <div class="moments" id="plat-repas" role="group" aria-label="Repas visé"></div>
+    <ul class="plat-liste" id="plat-liste"></ul>
+    <p class="plat-vide" id="plat-vide">Ton plat est vide : ajoute des produits avec « Ajouter au plat ».</p>
+    <dl class="plat-macros" id="plat-macros"></dl>
+    <p class="plat-note">Le plat se vide quand tu recharges la page.</p>
+  </div>
+  <button type="button" class="plat-barre" id="plat-ouvrir" aria-expanded="false" aria-controls="plat-detail">
+    <span class="plat-resume"><strong id="plat-kcal">0</strong> / <span id="plat-quota"></span> kcal · <span id="plat-info"></span></span>
+    <span class="plat-etat" id="plat-etat" aria-live="polite"></span>
+    <span class="plat-jauge" aria-hidden="true"><i id="plat-jauge"></i></span>
+  </button>
+</aside>
 
 <div class="scan" id="scan" role="dialog" aria-modal="true" aria-labelledby="scan-nom" hidden>
   <div class="scan-fiche">
@@ -362,6 +411,7 @@ PRODUITS.forEach(function(p){
         '<dl><div><dt><span class="puce p"></span>Protéines</dt><dd data-r="p"></dd></div>' +
         '<div><dt><span class="puce g"></span>Glucides</dt><dd data-r="g"></dd></div>' +
         '<div><dt><span class="puce l"></span>Lipides</dt><dd data-r="l"></dd></div></dl></div>' +
+      '<button type="button" class="ajouter" data-a="ajouter">Ajouter au plat · <span data-r="ajout"></span></button>' +
       (cuit ? '<p class="cuit" data-r="cuit"></p>' +
         '<details class="casserole"><summary>Je cuisine pour deux</summary><div class="cass-corps">' +
           '<label for="cru-' + p.id + '">Cru versé dans la casserole<span class="champ"><input id="cru-' + p.id + '" type="number" inputmode="numeric" min="0" step="10"> g</span></label>' +
@@ -399,6 +449,12 @@ PRODUITS.forEach(function(p){
     else if (a === "retour") s.n = p.portion;
     else if (a === "moment") s.n = p.moments[b.dataset.k];
     else if (a === "scan") { ouvrirScan(p, b); return; }
+    else if (a === "ajouter") {
+      ajouterAuPlat(p, s.n);
+      b.classList.add("ok"); b.firstChild.textContent = "Ajouté ✓ · ";
+      clearTimeout(b._t); b._t = setTimeout(function(){ b.classList.remove("ok"); b.firstChild.textContent = "Ajouter au plat · "; }, 900);
+      return;
+    }
     maj(p);
   });
   if (cuit) {
@@ -412,6 +468,7 @@ function maj(p){
   const c = cartes[p.id], n = etat[p.id].n, v = valeurs(p, n);
   c.r.kcal.textContent = nf0.format(v.kcal);
   c.r.qte.textContent = libelle(p, n);
+  c.r.ajout.textContent = libelle(p, n);
   c.r.pesee.textContent = p.unite ? "≈ " + nf0.format(grammes(p, n)) + " g, " + p.pesee : p.pesee;
   c.r.p.textContent = nf.format(v.p) + " g";
   c.r.g.textContent = nf.format(v.g) + " g";
@@ -481,6 +538,83 @@ function filtrer(){
 }
 champ.addEventListener("input", filtrer);
 filtrer();
+
+/* ---------- Mon plat ---------- */
+const QUOTAS = {"Petit déjeuner":675, "Déjeuner":900, "Dîner":563, "En-cas":113, "Journée":2250};
+const heure = new Date().getHours();
+let repas = heure < 11 ? "Petit déjeuner" : heure < 15 ? "Déjeuner" : heure < 18 ? "En-cas" : "Dîner";
+const plat = [];   // [{p: produit, n: quantité (g, ou unités)}]
+const zonePlat = document.getElementById("plat");
+const detail = document.getElementById("plat-detail");
+const ouvrir = document.getElementById("plat-ouvrir");
+const liste = document.getElementById("plat-liste");
+const zoneRepas = document.getElementById("plat-repas");
+
+Object.keys(QUOTAS).forEach(function(k){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "moment"; b.dataset.k = k;
+  b.textContent = k + " · " + nf0.format(QUOTAS[k]);
+  b.addEventListener("click", function(){ repas = k; majPlat(); });
+  zoneRepas.appendChild(b);
+});
+
+function ajouterAuPlat(p, n){
+  const x = plat.find(function(i){ return i.p === p; });
+  if (x) x.n += n; else plat.push({p: p, n: n});
+  dessinerListe();
+}
+function totaux(){
+  const t = {kcal: 0, p: 0, g: 0, l: 0};
+  plat.forEach(function(i){ const v = valeurs(i.p, i.n); t.kcal += v.kcal; t.p += v.p; t.g += v.g; t.l += v.l; });
+  return t;
+}
+function dessinerListe(){
+  liste.innerHTML = plat.map(function(i, k){
+    return '<li data-i="' + k + '"><span class="plat-nom">' + i.p.nom + '<small>' + i.p.pesee + '</small></span>' +
+      '<label class="plat-qte"><span class="vh">Quantité : ' + i.p.nom + '</span><input type="number" inputmode="decimal" min="0" step="' + i.p.pas + '" value="' + i.n + '">' + (i.p.unite ? i.p.unite + "(s)" : "g") + '</label>' +
+      '<span class="plat-k"></span>' +
+      '<button type="button" class="plat-suppr" aria-label="Enlever ' + i.p.nom + '">×</button></li>';
+  }).join("");
+  majPlat();
+}
+function majPlat(){
+  const t = totaux(), q = QUOTAS[repas], ecart = Math.round(t.kcal - q);
+  liste.querySelectorAll("li").forEach(function(li){
+    const i = plat[Number(li.dataset.i)];
+    li.querySelector(".plat-k").textContent = nf0.format(valeurs(i.p, i.n).kcal) + " kcal";
+  });
+  document.getElementById("plat-vide").hidden = plat.length > 0;
+  document.getElementById("plat-kcal").textContent = nf0.format(t.kcal);
+  document.getElementById("plat-quota").textContent = nf0.format(q);
+  document.getElementById("plat-info").textContent = repas + " · " + plat.length + " produit" + (plat.length > 1 ? "s" : "");
+  document.getElementById("plat-etat").textContent = ecart > 0 ? "+ " + nf0.format(ecart) + " kcal en trop" : "reste " + nf0.format(-ecart) + " kcal";
+  document.getElementById("plat-jauge").style.width = Math.min(100, q ? 100 * t.kcal / q : 0) + "%";
+  zonePlat.classList.toggle("depasse", ecart > 0);
+  zoneRepas.querySelectorAll(".moment").forEach(function(b){ b.setAttribute("aria-pressed", b.dataset.k === repas ? "true" : "false"); });
+  document.getElementById("plat-macros").innerHTML =
+    '<div><dt><span class="puce p"></span>Protéines</dt><dd>' + nf.format(t.p) + ' g</dd></div>' +
+    '<div><dt><span class="puce g"></span>Glucides</dt><dd>' + nf.format(t.g) + ' g</dd></div>' +
+    '<div><dt><span class="puce l"></span>Lipides</dt><dd>' + nf.format(t.l) + ' g</dd></div>';
+}
+liste.addEventListener("input", function(e){
+  const li = e.target.closest("li"); if (!li) return;
+  const v = parseFloat(String(e.target.value).replace(",", "."));
+  plat[Number(li.dataset.i)].n = v > 0 ? v : 0;
+  majPlat();
+});
+liste.addEventListener("click", function(e){
+  const b = e.target.closest(".plat-suppr"); if (!b) return;
+  plat.splice(Number(b.closest("li").dataset.i), 1);
+  dessinerListe();
+});
+document.getElementById("plat-vider").addEventListener("click", function(){ plat.length = 0; dessinerListe(); });
+function basculerPlat(ouvert){
+  detail.hidden = !ouvert;
+  ouvrir.setAttribute("aria-expanded", ouvert ? "true" : "false");
+}
+ouvrir.addEventListener("click", function(){ basculerPlat(detail.hidden); });
+document.addEventListener("keydown", function(e){ if (e.key === "Escape" && !detail.hidden && scan.hidden) basculerPlat(false); });
+majPlat();
 
 /* ---------- Mode scan ---------- */
 const scan = document.getElementById("scan");
