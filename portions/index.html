@@ -63,6 +63,13 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
 .obj-macros dd{font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
 .obj-macros dd small{display:block;font-weight:400;font-size:12.5px;color:var(--sourdine)}
 .objectif .barre{height:10px}
+.obj-repas{flex:1 1 100%;border-top:1px solid var(--filet);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.obj-repas ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.obj-repas li{border:1px solid var(--filet);border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.obj-repas li span{font-size:12.5px;color:var(--sourdine)}
+.obj-repas li strong{font-family:var(--titre);font-weight:700;font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums}
+.obj-repas li small{font-family:var(--titre);font-weight:600;font-size:15px}
+@media (max-width:560px){.obj-repas ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Recherche et filtres */
 .outils{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--fond);padding-block:10px;border-bottom:1px solid var(--filet);display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
@@ -175,6 +182,15 @@ h1{font-family:var(--titre);font-weight:700;font-size:clamp(36px,5vw,56px);line-
         <div><dt><span class="puce g"></span>Glucides</dt><dd>220 g<small>40 % · 900 kcal</small></dd></div>
         <div><dt><span class="puce l"></span>Lipides</dt><dd>60 g<small>25 % · 563 kcal</small></dd></div>
       </dl>
+    </div>
+    <div class="obj-repas">
+      <p class="obj-titre">Par repas</p>
+      <ul>
+        <li><span>Petit déjeuner</span><strong>675 <small>kcal</small></strong></li>
+        <li><span>Déjeuner</span><strong>900 <small>kcal</small></strong></li>
+        <li><span>Dîner</span><strong>563 <small>kcal</small></strong></li>
+        <li><span>En-cas</span><strong>113 <small>kcal</small></strong></li>
+      </ul>
     </div>
   </section>
 
